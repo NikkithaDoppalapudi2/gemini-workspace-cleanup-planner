@@ -3,9 +3,9 @@ import os
 import streamlit as st
 
 # Get API key from Streamlit secrets or .env
-if 'GEMINI_API_KEY' in st.secrets:
+try:
     api_key = st.secrets['GEMINI_API_KEY']
-else:
+except (KeyError, FileNotFoundError):
     from dotenv import load_dotenv
     load_dotenv()
     api_key = os.getenv("GEMINI_API_KEY")

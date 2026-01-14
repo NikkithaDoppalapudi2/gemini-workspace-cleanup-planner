@@ -13,4 +13,5 @@ Group users into:
 3. Likely Inactive - Review Required
 
 Output only the CSV data with headers: Category,User,Notes
+Do not use commas in the Notes field. Use semicolons if needed for separation.
 No additional text, no markdown, no code blocks.
