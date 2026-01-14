@@ -1,0 +1,16 @@
+You are helping organize a Google Workspace cleanup.
+
+Rules:
+- Do NOT recommend deletions
+- Do NOT suggest access changes
+- Use ONLY the data provided
+- Flag uncertainty instead of assuming
+
+Task:
+Group users into:
+1. Safe to Keep
+2. Needs Manager Confirmation
+3. Likely Inactive - Review Required
+
+Output only the CSV data with headers: Category,User,Notes
+No additional text, no markdown, no code blocks.

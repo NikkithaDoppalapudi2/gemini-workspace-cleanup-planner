@@ -1,0 +1,5 @@
+Name,Email,Role,LastLoginDays,AccessLevel
+John,john@company.com,Engineer,3,Editor
+Sara,sara@company.com,Contractor,180,Viewer
+Mike,mike@company.com,Former Employee,365,Editor
+Anna,anna@company.com,Manager,7,Owner
