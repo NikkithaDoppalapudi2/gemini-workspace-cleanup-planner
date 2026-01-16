@@ -1,7 +1,6 @@
-from google import genai
+import google.generativeai as genai
 import os
 import streamlit as st
-import time
 
 # Get API key from Streamlit secrets or .env
 try:
@@ -11,19 +10,21 @@ except (KeyError, FileNotFoundError):
     load_dotenv()
     api_key = os.getenv("GEMINI_API_KEY")
 
-try:
-    client = genai.Client(api_key=api_key)
-except Exception as e:
-    st.error(f"Failed to initialize Gemini client: {str(e)}")
-    st.stop()
+# Configure the client
+if api_key:
+    genai.configure(api_key=api_key)
+else:
+    st.warning("⚠️ No API key found. Please set GEMINI_API_KEY in your .env file or Streamlit secrets.")
 
 def call_gemini(prompt):
+    """Call Gemini API with the given prompt."""
     try:
-        response = client.models.generate_content(model='gemini-2.0-flash-exp', contents=prompt)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
         return response.text
     except Exception as e:
         error_str = str(e)
-        if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+        if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str or "quota" in error_str.lower():
             st.error("🚫 Gemini API Quota Exceeded")
             st.warning("""
             **Free Tier Limit Reached**
