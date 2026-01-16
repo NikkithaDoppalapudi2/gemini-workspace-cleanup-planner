@@ -409,30 +409,59 @@ with tab3:
                         for i in range(0, len(df), chunk_size):
                             chunk = df.iloc[i:i+chunk_size]
                             chunk_prompt = build_prompt(chunk, base_prompt)
+                            
+                            # Log progress
+                            status_text.text(f"Processing batch {i//chunk_size + 1} of {total_chunks}...")
+                            
                             chunk_result = call_gemini(chunk_prompt)
                             
+                            # Handle error in chunk
+                            if chunk_result.startswith("Error:"):
+                                st.error(f"Batch {i//chunk_size + 1} failed: {chunk_result}")
+                                # Use original data as fallback with 'Manual Review' category
+                                fallback_results = []
+                                for _, row in chunk.iterrows():
+                                    fallback_results.append(f"Needs Manager Confirmation,{row['Email']},API Limit Hit - Please review manually")
+                                chunk_result = "Category,User,Notes\n" + "\n".join(fallback_results)
+                            
                             # Clean the chunk result
-                            chunk_result = chunk_result.strip().lstrip('```csv').rstrip('```').strip()
+                            cleaned_result = chunk_result.strip()
+                            if cleaned_result.startswith("```"):
+                                # Extract content between code blocks if present
+                                lines = cleaned_result.split('\n')
+                                if lines[0].startswith("```"):
+                                    lines = lines[1:]
+                                if lines and lines[-1].startswith("```"):
+                                    lines = lines[:-1]
+                                cleaned_result = '\n'.join(lines).strip()
                             
                             # Skip header for subsequent chunks
                             if i > 0:
-                                lines = chunk_result.split('\n')
-                                if len(lines) > 1:
-                                    chunk_result = '\n'.join(lines[1:])
+                                lines = cleaned_result.split('\n')
+                                if len(lines) > 1 and "Category" in lines[0]:
+                                    cleaned_result = '\n'.join(lines[1:])
                             
-                            results.append(chunk_result)
+                            results.append(cleaned_result)
+                            
+                            # Add a small delay between batches to respect free tier (15 RPM for Gemini 1.5 Flash)
+                            if i + chunk_size < len(df):
+                                time.sleep(2)
                             
                             # Update progress
                             progress = min((i + chunk_size) / len(df), 1.0)
                             progress_bar.progress(progress)
-                            status_text.text(f"Processing batch {i//chunk_size + 1} of {total_chunks}...")
                         
                         output = '\n'.join(results)
                         progress_bar.empty()
                         status_text.empty()
                     else:
                         output = call_gemini(final_prompt)
-                        output = output.strip().lstrip('```csv').rstrip('```').strip()
+                        # Clean code blocks
+                        if output.strip().startswith("```"):
+                            lines = output.strip().split('\n')
+                            if lines[0].startswith("```"): lines = lines[1:]
+                            if lines and lines[-1].startswith("```"): lines = lines[:-1]
+                            output = '\n'.join(lines).strip()
                     
                     # Parse and display results
                     df_output = pd.read_csv(StringIO(output))
