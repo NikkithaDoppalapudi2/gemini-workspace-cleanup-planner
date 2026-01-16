@@ -24,17 +24,20 @@ def call_gemini(prompt, max_retries=3):
         return "Error: No API key configured."
 
     # List of models to try in order of preference
-    # Some older/beta keys might require specific names or the latest exp
+    # Using full model names with prefixes as returned by list_models()
     models_to_try = [
-        'gemini-1.5-flash-latest',
-        'gemini-2.0-flash-exp',
-        'gemini-1.5-flash'
+        'models/gemini-1.5-flash',
+        'models/gemini-pro',
+        'gemini-1.5-flash',
+        'gemini-pro'
     ]
     
     last_error = ""
     
     for model_name in models_to_try:
         try:
+            # Re-configure to ensure fresh state if needed
+            genai.configure(api_key=api_key)
             model = genai.GenerativeModel(model_name)
             
             for attempt in range(max_retries):
@@ -51,6 +54,7 @@ def call_gemini(prompt, max_retries=3):
                         if candidate.content.parts:
                             return candidate.content.parts[0].text
                         else:
+                            # If blocked by safety, we can't do much with this model/prompt
                             return "Error: Empty response. Safety filters might be blocking the output."
                     else:
                         return "Error: No response generated. Safety filters might be blocking the output."
@@ -68,7 +72,7 @@ def call_gemini(prompt, max_retries=3):
                             # Quota exhausted for this model, try next model in list
                             break 
                     
-                    # If model not found (404), try next model
+                    # If model not found (404), try next model immediately
                     elif "404" in error_str or "not found" in error_str.lower():
                         break
                     
@@ -78,8 +82,8 @@ def call_gemini(prompt, max_retries=3):
                             continue
                         break
             
-            # If we successfully got a response from a model, we would have returned above
-            # If we broke out of the retry loop, we try the next model
+            # If we successfully got a response (returning above), we're done
+            # If we're here, it means we exhausted retries or broke out to try next model
             
         except Exception as e:
             last_error = str(e)
@@ -92,9 +96,8 @@ def call_gemini(prompt, max_retries=3):
         **Free Tier Limit Reached**
         - **Wait**: Free quota resets daily.
         - **Batching**: Try analyzing fewer users at once (use filters in the first tab).
-        - **Models**: We tried several Gemini models, but all are currently at their limit or unavailable.
         """)
-        return "Error: API quota exceeded. Please try again later or reduce data size."
+        return "Error: API quota exceeded. Please try smaller batches later."
     else:
         st.error(f"Gemini API error: {last_error}")
         return f"Error: {last_error}"
