@@ -196,6 +196,22 @@ with st.sidebar:
     
     st.divider()
     st.markdown("---")
+    
+    # Connection Diagnostic
+    with st.expander("🛠️ System Status"):
+        if api_key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=api_key)
+                models = [m.name.replace('models/', '') for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+                st.success("API Connected")
+                st.write(f"**Available Channels:** {len(models)}")
+                st.write(", ".join(models[:3]) + ("..." if len(models) > 3 else ""))
+            except Exception as e:
+                st.error(f"Connection Failed: {str(e)[:50]}")
+        else:
+            st.warning("API Key Missing")
+            
     st.caption("© 2026 Workspace Insights Inc.")
 
 # ---------- Tabs ----------
