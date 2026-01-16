@@ -8,7 +8,7 @@ import time
 
 from src.load_data import load_users
 from src.cleanup_planner import build_prompt
-from src.gemini_client import call_gemini
+from src.gemini_client import call_gemini, api_key
 from src.risk_calculator import add_risk_scores, get_risk_summary
 from src.email_templates import (
     generate_manager_notification,
